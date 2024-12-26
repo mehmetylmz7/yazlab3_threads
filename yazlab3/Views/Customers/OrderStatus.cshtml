@@ -1,0 +1,34 @@
+﻿@model List<Order>
+
+<h2>Siparişleriniz</h2>
+@if (ViewBag.PurchaseMessage != null)
+{
+    <div class="alert alert-info">
+        @ViewBag.PurchaseMessage
+    </div>
+}
+<table class="table">
+    <thead>
+        <tr>
+            <th>Ürün Adı</th>
+            <th>Adet</th>
+            <th>Toplam Fiyat</th>
+            <th>Sipariş Durumu</th>
+            <th>Bekleme Süresi</th>
+            <th>Öncelik</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var order in Model)
+        {
+            <tr>
+                <td>@order.Product.ProductName</td>
+                <td>@order.Quantity</td>
+                <td>@order.TotalPrice TL</td>
+                <td>@order.OrderStatus</td>
+                <td>@order.WaitTime.TotalMinutes dakika</td>
+                <td>@order.OrderPriority</td>  <!-- Siparişin önceliği -->
+            </tr>
+        }
+    </tbody>
+</table>

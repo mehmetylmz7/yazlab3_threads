@@ -1,0 +1,46 @@
+﻿@model yazlab3.Models.CustomerProductViewModel
+
+<h1>Hoş Geldiniz, @Model.Customer.CustomerName</h1>
+<p><strong>Müşteri Türü:</strong> @Model.Customer.CustomerType</p>
+<p><strong>Bütçeniz:</strong> @Model.Customer.Budget TL</p>
+<p><strong>Toplam Harcamanız:</strong> @Model.Customer.TotalSpent TL</p
+<p><strong>Siparişlerim:</strong>  <a asp-action="OrderStatus" class="btn btn-success">Sipariş Durumu</a></p>
+
+<!-- Sepetim Butonu -->
+<p>
+    <a asp-action="Card" class="btn btn-info">Sepetim</a>
+</p>
+
+<h2>Ürün Listesi</h2>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Ürün Adı</th>
+            <th>Stok</th>
+            <th>Fiyat</th>
+            <th>Sepete Ekle</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var product in Model.Products)
+        {
+            <tr>
+                <td>@product.ProductName</td>
+                <td>@product.Stock</td>
+                <td>@product.Price TL</td>
+                <td>
+                    <form asp-action="AddToCart" asp-controller="Customers" method="post">
+                        <input type="hidden" name="ProductID" value="@product.ProductID" />
+                        <div class="form-group">
+                            <label for="Quantity_@product.ProductID">Adet:</label>
+                            <input id="Quantity_@product.ProductID" type="number" name="Quantity" min="1" max="@product.Stock" required class="form-control" />
+                        </div>
+                        <button type="submit" class="btn btn-primary">Sepete Ekle</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+
