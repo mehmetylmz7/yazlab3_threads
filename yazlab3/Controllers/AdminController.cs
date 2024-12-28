@@ -219,44 +219,62 @@ public class AdminController : Controller
         }
         return View(logViewModels);
     }
+
     [HttpPost]
     public IActionResult ProcessAllOrders()
     {
         var pendingOrders = _context.Orders
-            .Include(o => o.Customer)  // Müşteri bilgilerini dahil et
-            .Include(o => o.Product)   // Ürün bilgilerini dahil et
-            .Where(o => o.OrderStatus == "Siparişiniz Alındı")  // Sadece bekleyen siparişleri al
+            .Include(o => o.Customer)
+            .Include(o => o.Product)
+            .Where(o => o.OrderStatus == "Siparişiniz Alındı") // Bekleyen siparişler
             .OrderByDescending(o => o.OrderPriority) // Önceliğe göre sırala
             .ToList();
 
-        foreach (var order in pendingOrders)
+        // Mutex tanımlaması
+        var mutex = new Mutex();
+
+        // Parallel.ForEach kullanarak her siparişi işlemeye başlıyoruz
+        Parallel.ForEach(pendingOrders, order =>
         {
-            var product = order.Product;
-            var customer = order.Customer;
+            mutex.WaitOne(); // Kaynak erişimini senkronize et
 
-            if (product.Stock >= order.Quantity && (int)(customer.Budget) >= order.TotalPrice)
+            try
             {
-                // Stok ve bütçe güncelleniyor
-                product.Stock -= order.Quantity;
-                customer.Budget -= (double)order.TotalPrice;
-                customer.TotalSpent += (double)order.TotalPrice;
+                var product = order.Product;
+                var customer = order.Customer;
 
-                order.OrderStatus = "Onaylandı";
-                order.ApprovalDate = DateTime.Now;
-                order.WaitTime = order.ApprovalDate - order.OrderDate;
-                //log burda olduğu için onaylanınca ürrün ismi gözükmücek çünkü hepsiinni onalıyor
-                new Logger.Log(HttpContext.Session.GetInt32("AdminID"), order.OrderID, Logger.UserType.Admin, "Bilgilendirme", "Sipariş onaylandı ve işleme alındı.");
+                if (product.Stock >= order.Quantity && (int)(customer.Budget) >= order.TotalPrice)
+                {
+                    // Stok ve bütçe kontrolü
+                    product.Stock -= order.Quantity;
+                    customer.Budget -= (double)order.TotalPrice;
+                    customer.TotalSpent += (double)order.TotalPrice;
+
+                    // Sipariş onaylandı
+                    order.OrderStatus = "Onaylandı";
+                    order.ApprovalDate = DateTime.Now;
+                    order.WaitTime = order.ApprovalDate - order.OrderDate;
+
+                    // Loglama işlemi
+                    new Logger.Log(HttpContext.Session.GetInt32("AdminID"), order.OrderID, Logger.UserType.Admin, "Bilgilendirme", "Sipariş onaylandı ve işleme alındı.");
+                }
+                else
+                {
+                    // Sipariş reddedildi
+                    order.OrderStatus = "Reddedildi";
+                    new Logger.Log(HttpContext.Session.GetInt32("AdminID"), order.OrderID, Logger.UserType.Admin, "Bilgilendirme", "Sipariş reddedildi. Yetersiz stok veya bütçe.");
+                }
+
+                // Veritabanı işlemlerini kaydet
+                _context.SaveChanges();
             }
-            else
+            finally
             {
-                order.OrderStatus = "Reddedildi";
-                new Logger.Log(HttpContext.Session.GetInt32("AdminID"), order.OrderID, Logger.UserType.Admin, "Bilgilendirme", "Sipariş reddedildi. Yetersiz stok veya bütçe.");
+                mutex.ReleaseMutex(); // Mutex'i serbest bırak
             }
-        }
+        });
 
-        _context.SaveChanges(); // Değişiklikleri kaydet
         ViewBag.OrderStatusMessage = "Tüm işlemler sırayla tamamlandı.";
-
         return RedirectToAction("OrderList"); // Sipariş listesine geri dön
     }
 
