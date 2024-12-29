@@ -150,9 +150,9 @@ namespace yazlab3.Controllers
 
 
         // POST: Customers/AddToCart
-   [HttpPost]
-[ValidateAntiForgeryToken]
-public IActionResult AddToCart(int ProductID, int Quantity)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult AddToCart(int ProductID, int Quantity)
 {
     int? customerID = HttpContext.Session.GetInt32("CustomerID");
     if (customerID == null)
@@ -197,6 +197,9 @@ public IActionResult AddToCart(int ProductID, int Quantity)
     new Logger.Log(customerID, null, Logger.UserType.Customer, "Bilgilendirme", "Ürün sepete eklendi.");
     return RedirectToAction("Card");
 }
+
+
+
         public IActionResult Card()
         {
             int? customerID = HttpContext.Session.GetInt32("CustomerID");
@@ -214,6 +217,9 @@ public IActionResult AddToCart(int ProductID, int Quantity)
 
             foreach (var order in expiredOrders)
             {
+                var logsToDelete = _context.Logs.Where(l => l.OrderID == order.OrderID).ToList();
+                _context.Logs.RemoveRange(logsToDelete);
+
                 // Stok iadesi
                 var product = _context.Products.FirstOrDefault(p => p.ProductID == order.ProductID);
                 if (product != null)
@@ -238,6 +244,10 @@ public IActionResult AddToCart(int ProductID, int Quantity)
 
             return View(orders);
         }
+
+
+
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Checkout(List<int> productIds, List<int> quantities)

@@ -74,6 +74,7 @@ public class AdminController : Controller
         var orderedOrders = orders.OrderByDescending(o => o.OrderPriority).ToList();
         return View(orderedOrders);
     }
+
     public IActionResult ApproveOrder(int orderId)
     {
         var existingOrder = _context.Orders
@@ -160,6 +161,7 @@ public class AdminController : Controller
         new Logger.Log(HttpContext.Session.GetInt32("CustomerID"), orderId, Logger.UserType.Admin, "Bilgilendirme", "Sipariş reddedildi.");
         return RedirectToAction("OrderList"); // Sipariş listesi sayfasına yönlendir  
     }
+
     public async Task<IActionResult> ViewLogs()
     {
         var logs = await _context.Logs
@@ -249,6 +251,11 @@ public class AdminController : Controller
                     product.Stock -= order.Quantity;
                     customer.Budget -= (double)order.TotalPrice;
                     customer.TotalSpent += (double)order.TotalPrice;
+                    if (customer.TotalSpent >= 2000 && customer.CustomerType == "Standard")
+                    {
+                        customer.CustomerType = "Premium";
+                        new Logger.Log(HttpContext.Session.GetInt32("CustumorID"), null, Logger.UserType.Customer, "Bilgilendirme", "Müşteri türü Premium olarak güncellendi.");
+                    }
 
                     // Sipariş onaylandı
                     order.OrderStatus = "Onaylandı";
