@@ -2,6 +2,27 @@
     // ViewBag'ten JSON formatında gelen veriyi alıyoruz
     var stokVerileriJson = ViewBag.StokVerileri;
 }
+<!-- Uyarı Notu -->
+<div id="uyariNotu" style="display: none; position: fixed; top: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 500px; text-align: center; padding: 10px; background-color: #ffcccb; color: #333; border: 1px solid #f5a9a9; border-radius: 5px; z-index: 1000;">
+    İşlem başarıyla gerçekleşti!
+</div>
+
+<script>
+    // Uyarı notunu göstermek ve birkaç saniye sonra gizlemek için fonksiyon
+    function gosterUyariNotu(mesaj) {
+        var uyariNotu = document.getElementById('uyariNotu');
+        uyariNotu.textContent = mesaj; // Uyarı mesajını ayarla
+        uyariNotu.style.display = 'block'; // Göster
+        setTimeout(function () {
+            uyariNotu.style.display = 'none'; // 3 saniye sonra gizle
+        }, 9000); // 3000 milisaniye = 3 saniye
+    }
+
+    // Sayfa yüklendiğinde uyarı notunu göster
+    window.onload = function () {
+        gosterUyariNotu('DİKKAT!!! Kırmızı renkle gosterilen ürünler stoğu azalmakta (10 veya altında ) ya da biten ürünlerdir..');
+    };
+</script>
 
 <h2>Stok Takibi - Pie Chart</h2>
 
@@ -107,3 +128,4 @@
         }
     });
 </script>
+
